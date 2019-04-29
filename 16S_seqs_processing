@@ -10,6 +10,7 @@ cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
 
 ##############################################################################################################################
 # QUALITY FILTERING
+# min. qual mean 25 (first trimmed right end at 25 quality), no N bases, 
 
 prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right 25 -rm_header -out_format 4 -out_good gard_q25 -out_bad null -graph_data gard_q25.gd
 
@@ -27,6 +28,6 @@ prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right
 # 	min_qual_mean: 15
 
 # Data report pre- & post-filter
-~/working/gard/16s/
-- gard.gd.html
-- gard_q25.gd.html
+# ~/working/gard/16s/
+# - gard.gd.html
+# - gard_q25.gd.html
