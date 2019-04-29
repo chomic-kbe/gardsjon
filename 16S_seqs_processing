@@ -1,3 +1,4 @@
+##############################################################################################################################
 # DATA PREPROCESS
 
 # Demultiplexing -(twice separately, because part of smaples in run1 and the rest in run2)
@@ -6,3 +7,26 @@ split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes
 
 # Merge run1 and run2 file
 cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
+
+##############################################################################################################################
+# QUALITY FILTERING
+
+prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right 25 -rm_header -out_format 4 -out_good gard_q25 -out_bad null -graph_data gard_q25.gd
+
+# Input and filter stats:
+# 	Input sequences: 1,297,395
+# 	Input bases: 327,560,803
+# 	Input mean length: 252.48
+# 	Good sequences: 1,297,380 (100.00%)
+# 	Good bases: 327,466,677
+# 	Good mean length: 252.41
+# 	Bad sequences: 15 (0.00%)
+# 	Bad bases: 3,796
+# 	Bad mean length: 253.07
+# 	Sequences filtered by specified parameters:
+# 	min_qual_mean: 15
+
+# Data report pre- & post-filter
+~/working/gard/16s/
+- gard.gd.html
+- gard_q25.gd.html
