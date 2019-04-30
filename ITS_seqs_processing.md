@@ -23,51 +23,54 @@ prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right
 ~~~
 ITSx -i ../gard_q25.fasta -o gard --preserve T --cpu 12
 ~~~
+> Number of sequences in input file:              1742893
+Sequences detected as ITS by ITSx:      1630014
+
 
 #### LENGTH FILTERING & TRIMMING
-min length 250, then trim to length 250
+min length 150
 ~~~
-prinseq-lite.pl -fasta gard_q25.fasta -min_len 250 -trim_to_len 250 -out_good gard_l250 -out_bad null -line_width 0
+prinseq-lite.pl -fasta itsx/gard.ITS1.fasta -out_good gard_l150 - out_bad null -min_len 150 -line_width 0
 ~~~
-> Input sequences: 1,297,380
->-	Good sequences: 1,270,992 (97.97%)
+> Input sequences: 1,294,433
+>-	Good sequences: 991,961 (76.63%)
 
-Check trim
+Check filtering success
 ~~~
-prinseq-lite.pl -fasta gard_l250.fasta -stats_len -out_good null -out_bad null
+prinseq-lite.pl -fasta rum.ITS1_l150.fasta -stats_len -out_good null -out_bad null
 ~~~
->- stats_len	max	250
->- stats_len	mean	250.00
->- stats_len	median	250
->- stats_len	min	250
->- stats_len	mode	250
->- stats_len	modeval	1270992
->- stats_len	range	1
->- stats_len	stddev	0.00
+>- stats_len       max     221
+>-  stats_len       mean    174.64
+>- stats_len       median  172
+>- stats_len       min     150
+>- stats_len       mode    163
+>- stats_len       modeval 145498
+>- stats_len       range   72
+>- stats_len       stddev  13.34
 
 
 ## OTU CONSTRUCTION
 USEARCH needs “.” instead of “_” in the sequence header
 ~~~
-sed 's/_/./g' gard_l250.fasta > seqs_dot.fna
+sed 's/_/./g' ../gard_l150.fasta > seqs_dot.fna
 ~~~
 Dereplication
 ~~~
 usearch81_64_new -derep_fulllength seqs_dot.fna -fastaout uniq.fna -sizeout
 ~~~
->-	1081190 seqs, 143920 uniques, 105527 singletons (73.3%)
->-	Min size 1, median 1, max 48818, avg 7.51
+>-	933570 seqs, 161613 uniques, 130761 singletons (80.9%)
+>-	Min size 1, median 1, max 62581, avg 5.78
 	
-OTU clustering (97% similarity), singletons removed
+OTU clustering (98.5% similarity), singletons removed
 ~~~
 usearch81_64_new -cluster_otus uniq.fna -minsize 2 -otus otus.fna -relabel OTU -otu_radius_pct 3
 ~~~
->	5158 OTUs, 24103 chimeras (21.8%)
+>	2526 OTUs, 409 chimeras (1.3%)
 
 ## TAXONOMY ASSIGNMENT
-Taxonomy assignment; Qiime - BLAST against SILVA v.132
+Taxonomy assignment; Qiime - BLAST against UNITE 7.2
 ~~~
-parallel_assign_taxonomy_blast.py -i otus.fna -o blast/ -t /mnt/data/chomic/databases/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt  -r /mnt/data/chomic/databases/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna -O 16
+parallel_assign_taxonomy_blast.py -i ../otus.fna -o. -r /mnt/data/chomic/databases/unite/unite_qiime_17_12_01/sh_refs_qiime_ver7_dynamic_s_01.12.2017.fasta  -O 16 -t /mnt/data/chomic/databases/unite/unite_qiime_17_12_01/sh_taxonomy_qiime_ver7_dynamic_s_01.12.2017.txt
 ~~~
 
 Convert BLAST output to UTAX compatible
@@ -94,118 +97,134 @@ paste -d "" otus_line.fasta blast_taxonomy_utax.txt > otus_tax_blast.fna
 ~~~
 OTU table construction
 ~~~
-usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.97 -otutabout otu_table.txt
+usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.985 -otutabout otu_table.txt
 ~~~
->	1129175 / 1270992 mapped to OTUs (88.8%) 
+>	868329 / 933570 mapped to OTUs (93.0%) 
 
 ## BIOM table construction
 
 Convert UTAX taxonomy to phyloseq compatible
-- separate taxonomy and sequence counts
+- Separate taxonomy and sequence counts
 ~~~
-cut -f 64- otu_table.txt > tax.txt
-cut -f 1-63 otu_table.txt > abund.txt
-~~~
-
-Delete taxonomy level letters, change field separator from "," to ";", delete fileds containing "uncultured*", fill empty fields with "u_(lowest assigned level)".
-~~~
-sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g' otu_tax.txt| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > otu_tax_phyloseq.txt
+cut -f 63- otu_table.txt > tax.txt
+cut -f 1-62 otu_table.txt > abund.txt
 ~~~
 
-Merge OTU sequences and phyloseq comaptible taxonomy
+- Delete taxonomy level letters, change field separator from "," to ";", delete fileds containing "uncultured*", fill empty fields with "u_(lowest assigned level)".
+~~~
+sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g' tax.txt| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > tax_phyloseq.txt
+~~~
+
+- Merge sequence counts and phyloseq comaptible taxonomy
 ~~~
 paste abund.txt tax_phyloseq.txt > otu_table_phyloseq.txt
 ~~~
 
-Delete OTUs assigned to mitochondria or chloroplasts
+Discard non-fungal OTUs
 ~~~
-sed -i -E '/Mitochondria/d; /Chloroplast/d' otu_table_phyloseq.txt
+sed -i '3,${/Fungi/!d;}' otu_table.txt
 ~~~
 
 Create and summarize biom file
 ~~~
 biom convert -i otu_table_phyloseq.txt --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy -o otu_table_phyloseq.biom
 
-biom summarize-table -i otu_table_phyloseq.biom -o otu_table_phyloseq_summary.txt 
+biom summarize-table -i otu_table_phyloseq.biom -o otu_table_phyloseq_summary.txt
 ~~~
 
->Num samples: 62
-Num observations: 5158
-Total count: 1129175
-Table density (fraction of non-zero values): 0.208
+> Num samples: 61
+Num observations: 3098
+Total count: 922919
+Table density (fraction of non-zero values): 0.113
 
 > Counts/sample summary:
- Min: 26.0
- Max: 25698.0
- Median: 18263.500
- Mean: 18212.500
- Std. dev.: 4122.789
+ Min: 13.0
+ Max: 38220.0
+ Median: 13134.000
+ Mean: 15129.820
+ Std. dev.: 9512.690
  Sample Metadata Categories: None provided
  Observation Metadata Categories: taxonomy
 
 > Counts/sample detail:
-575: 26.0
-576: 11319.0
-579: 11504.0
-538: 11926.0
-530: 12487.0
-573: 12530.0
-545: 12923.0
-581: 12976.0
-570: 13403.0
-553: 14098.0
-568: 15089.0
-569: 15897.0
-561: 16408.0
-528: 16641.0
-578: 16856.0
-537: 16935.0
-554: 17012.0
-546: 17160.0
-527: 17179.0
-582: 17299.0
-559: 17580.0
-552: 17632.0
-574: 17695.0
-562: 17701.0
-549: 17859.0
-547: 17944.0
-565: 17996.0
-541: 18019.0
-550: 18121.0
-544: 18202.0
-564: 18262.0
-529: 18265.0
-522: 18281.0
-536: 18318.0
-539: 18364.0
-521: 18396.0
-572: 18764.0
-571: 18878.0
-577: 18914.0
-555: 19260.0
-566: 19431.0
-534: 19734.0
-563: 19923.0
-524: 20216.0
-556: 20255.0
-531: 20257.0
-551: 20837.0
-523: 21136.0
-580: 21183.0
-535: 21218.0
-567: 21380.0
-542: 21911.0
-533: 22046.0
-543: 22241.0
-532: 23109.0
-525: 23163.0
-560: 23500.0
-548: 23536.0
-540: 23916.0
-557: 24839.0
-558: 25527.0
-526: 25698.0
+577: 13.0
+529: 1431.0
+570: 1621.0
+533: 1786.0
+554: 2995.0
+581: 3668.0
+561: 3979.0
+541: 5150.0
+553: 5611.0
+537: 5744.0
+530: 5979.0
+555: 6190.0
+578: 6679.0
+521: 7091.0
+573: 7196.0
+580: 7362.0
+568: 7476.0
+545: 7630.0
+522: 8558.0
+557: 8689.0
+572: 8784.0
+525: 8785.0
+546: 8944.0
+579: 9368.0
+582: 9473.0
+524: 9560.0
+562: 9881.0
+528: 10117.0
+556: 12343.0
+566: 12740.0
+523: 13134.0
+575: 15859.0
+536: 16197.0
+527: 16572.0
+574: 16895.0
+532: 17009.0
+526: 17341.0
+534: 17894.0
+551: 17952.0
+531: 19066.0
+571: 19998.0
+565: 20180.0
+543: 20404.0
+550: 21395.0
+560: 21716.0
+567: 22612.0
+539: 22775.0
+523: 13134.0
+575: 15859.0
+536: 16197.0
+527: 16572.0
+574: 16895.0
+532: 17009.0
+526: 17341.0
+534: 17894.0
+551: 17952.0
+531: 19066.0
+571: 19998.0
+565: 20180.0
+543: 20404.0
+550: 21395.0
+560: 21716.0
+567: 22612.0
+539: 22775.0
+540: 23566.0
+538: 23587.0
+548: 25303.0
+547: 25345.0
+576: 26527.0
+535: 26788.0
+559: 26994.0
+544: 27067.0
+563: 28675.0
+552: 29141.0
+558: 29267.0
+549: 33308.0
+564: 37289.0
+542: 38220.0
 
 
 ### SOFTWARE USED
@@ -216,3 +235,4 @@ Table density (fraction of non-zero values): 0.208
 - cut (GNU coreutils) 8.23
 - paste (GNU coreutils) 8.23
 - biom, version 2.1.5
+- ITSx version 1.0.11
