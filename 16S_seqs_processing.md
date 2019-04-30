@@ -1,18 +1,18 @@
-##############################################################################################################################
 ### SOFTWARE USED
-* QIIME 1.9.1
-* PRINSEQ-lite 0.20.4
-* sed (GNU sed) 4.2.2
-* GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.2-p3, GNU MP 6.0.0)
-* cut (GNU coreutils) 8.23
+- QIIME 1.9.1
+- PRINSEQ-lite 0.20.4
+- sed (GNU sed) 4.2.2
+- GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.2-p3, GNU MP 6.0.0)
+- cut (GNU coreutils) 8.23
 - paste (GNU coreutils) 8.23
 - biom, version 2.1.5
 
-##############################################################################################################################
-# RAW SEQUENCES PREPROCESS ###################################################################################################
-##############################################################################################################################
-# DEMILTIPLEXING -(twice separately, because part of samples in run1 and the rest in run2)
+### RAW SEQUENCES PREPROCESS
+#### DEMILTIPLEXING 
+Done twice separately, because part of samples in run1 and the rest in run2.
+~~~~
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
+~~~~
 # Merge run1 and run2 file
 cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
 
