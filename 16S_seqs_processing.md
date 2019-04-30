@@ -14,7 +14,7 @@ Done twice separately, because part of samples in run1 and the rest in run2.
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
 ~~~
 Merge run1 and run2 file
-~~~~
+~~~
 cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
 ~~~
 
