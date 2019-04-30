@@ -92,9 +92,10 @@ Add empty rows to merge with otus.fna, get rid of OTU number
 ~~~
 sed -e 'G' blast/otus_tax_assignments_sorted.txt | cut -f 2 > blast/blast_taxonomy.txt
 ~~~
-Reformat taxonomy syntax for utax, delete "Ambiguous taxa" field
+Reformat taxonomy syntax for utax; delete "Ambigous_taxa" fields
 ~~~
 sed -e 's/;Ambiguous_taxa//g; s/D_0__/tax=d:/g; s/__/:/g; s/;/,/g; s/D_1/p/g; s/D_2/c/g; s/D_3/o/g; s/D_4/f/; s/D_5/g/g; s/D_6/s/g; s/ /_/g; s/tax=d/;tax=d/g' blast/blast_taxonomy.txt > blast/blast_taxonomy_utax.txt
+
 ~~~
 Merge OTU sequences and UTAX comaptible taxonomy
 ~~~
@@ -106,34 +107,43 @@ usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 
 ~~~
 >	1129175 / 1270992 mapped to OTUs (88.8%) 
 
+## BIOM table construction
 
-
+Convert UTAX taxonomy to phyloseq compatible
+- separate taxonomy and sequence counts
 ~~~
-phyloseq compatible taxonomy format
 cut -f 64- otu_table.txt > tax.txt
 cut -f 1-63 otu_table.txt > abund.txt
+~~~
 
-úprava formátování taxonomie, vyhození Ambiguous taxa a všech uncultured a nahrazení u_*
-sed 's/ /_/g; s/D_[0-9]__//g; s/;Ambiguous_taxa//g; s/;uncultured.*//g; s/;/,/g' tax_table_silva132_f2.txt | awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed 's/\(u_\)\1\{1,\}/u_/g; s/,/\t/g' > tax_table_silva132_f2_phyloseq.txt
+Delete taxonomy level letters, change field separator from "," to ";", delete fileds containing "uncultured*", fill empty fields with "u_(lowest assigned level)".
+~~~
+sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g' otu_tax.txt| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > otu_tax_phyloseq.txt
+~~~
 
-
-
-
-awk -F "\t" 'BEGIN {OFS = FS} {gsub(/[0-9].[0-9]/,"",$NF); gsub(/[()]/,"",$NF); print $0}' tax.txt | sed 's/_SH.07FU//g' | sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g'| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > tax_phyloseq.txt
-
+Merge OTU sequences and phyloseq comaptible taxonomy
+~~~
 paste abund.txt tax_phyloseq.txt > otu_table_phyloseq.txt
+~~~
 
-Create and summarize biom
+Delete OTUs assigned to mitochondria or chloroplasts
+~~~
+sed -i -E '/Mitochondria/d; /Chloroplast/d' otu_table_phyloseq.txt
+~~~
+
+Create and summarize biom file
+~~~
 biom convert -i otu_table_phyloseq.txt --to-hdf5 --table-type="OTU table" --process-obs-metadata taxonomy -o otu_table_phyloseq.biom
-biom summarize-table -i otu_table_phyloseq.biom -o otu_table_phyloseq_summary.txt 
 
+biom summarize-table -i otu_table_phyloseq.biom -o otu_table_phyloseq_summary.txt 
+~~~
 
 Num samples: 62
 Num observations: 5158
 Total count: 1129175
 Table density (fraction of non-zero values): 0.208
 
-Counts/sample summary:
+>Counts/sample summary:
  Min: 26.0
  Max: 25698.0
  Median: 18263.500
