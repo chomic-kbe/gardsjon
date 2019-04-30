@@ -1,4 +1,4 @@
-# gardsjon
+# Gardsjön
 
 Forest N fertilization experiment; experimental area at the Gårdsjön Lake
 
