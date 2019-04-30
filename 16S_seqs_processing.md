@@ -138,7 +138,7 @@ biom convert -i otu_table_phyloseq.txt --to-hdf5 --table-type="OTU table" --proc
 biom summarize-table -i otu_table_phyloseq.biom -o otu_table_phyloseq_summary.txt 
 ~~~
 
-Num samples: 62
+>Num samples: 62
 Num observations: 5158
 Total count: 1129175
 Table density (fraction of non-zero values): 0.208
