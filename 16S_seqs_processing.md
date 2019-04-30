@@ -1,14 +1,9 @@
-### SOFTWARE USED
-- QIIME 1.9.1
-- PRINSEQ-lite 0.20.4
-- sed (GNU sed) 4.2.2
-- GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.2-p3, GNU MP 6.0.0)
-- cut (GNU coreutils) 8.23
-- paste (GNU coreutils) 8.23
-- biom, version 2.1.5
+Workflow followed when processing 16S V4 region sequencing data
+- raw sequences preprocess
+- OTU construction and taxonomy assignemnt
 
 ### RAW SEQUENCES PREPROCESS
-#### DEMILTIPLEXING 
+#### DEMULTIPLEXING 
 Done twice separately, because part of samples in run1 and the rest in run2.
 ~~~
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
@@ -222,3 +217,15 @@ zbytek v R
 
 
 python2.7 collapse_table.py -i ../../gardsjon/16s/otu_table_phyloseq.txt -o ../../gardsjon/16s/faprotax/out.txt -r ../../gardsjon/16s/faprotax/log.txt -g FAPROTAX.txt -d taxonomy --force --group_leftovers_as not_assigned
+
+
+
+
+### SOFTWARE USED
+- QIIME 1.9.1
+- PRINSEQ-lite 0.20.4
+- sed (GNU sed) 4.2.2
+- GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.2-p3, GNU MP 6.0.0)
+- cut (GNU coreutils) 8.23
+- paste (GNU coreutils) 8.23
+- biom, version 2.1.5
