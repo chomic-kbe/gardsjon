@@ -1,6 +1,7 @@
 Workflow followed when processing 16S V4 region sequencing data
 - raw sequences preprocess
-- OTU construction and taxonomy assignemnt
+- OTU construction and taxonomy assignment
+- preparing for downstream analyses
 
 
 ## RAW SEQUENCES PREPROCESS
