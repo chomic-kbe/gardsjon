@@ -72,7 +72,7 @@ usearch81_64_new -cluster_otus uniq.fna -minsize 2 -otus otus.fna -relabel OTU -
 ~~~
 >	5158 OTUs, 24103 chimeras (21.8%)
 
-##TAXONOMY ASSIGNMENT
+## TAXONOMY ASSIGNMENT
 Taxonomy assignment; Qiime - BLAST against SILVA v.132
 ~~~
 parallel_assign_taxonomy_blast.py -i otus.fna -o blast/ -t /mnt/data/chomic/databases/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt  -r /mnt/data/chomic/databases/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna -O 16
