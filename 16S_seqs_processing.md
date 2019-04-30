@@ -10,14 +10,19 @@
 ### RAW SEQUENCES PREPROCESS
 #### DEMILTIPLEXING 
 Done twice separately, because part of samples in run1 and the rest in run2.
-~~~~
+~~~
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
+~~~
+Merge run1 and run2 file
 ~~~~
-# Merge run1 and run2 file
 cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
+~~~
 
-# QUALITY FILTERING - min. qual mean 25 (first trimmed right end at 25 quality), no N bases, 
+#### QUALITY FILTERING
+min. qual mean 25 (first trimmed right end at 25 quality), no N bases
+~~~
 prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right 25 -rm_header -out_format 4 -out_good gard_q25 -out_bad null -graph_data gard_q25.gd
+~~~
 # Input and filter stats:
 # 	Input sequences: 1,297,395
 # 	Input bases: 327,560,803
