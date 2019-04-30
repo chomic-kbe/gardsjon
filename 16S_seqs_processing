@@ -1,3 +1,4 @@
+```ruby
 ##############################################################################################################################
 # SOFTWARE USED
 #	QIIME 1.9.1
@@ -9,21 +10,15 @@
 #	biom, version 2.1.5
 
 ##############################################################################################################################
-# DATA PREPROCESS
-
-# Demultiplexing -(twice separately, because part of samples in run1 and the rest in run2)
-
+# RAW SEQUENCES PREPROCESS ###################################################################################################
+##############################################################################################################################
+# DEMILTIPLEXING -(twice separately, because part of samples in run1 and the rest in run2)
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
-
 # Merge run1 and run2 file
 cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
 
-##############################################################################################################################
-# QUALITY FILTERING
-# min. qual mean 25 (first trimmed right end at 25 quality), no N bases, 
-
+# QUALITY FILTERING - min. qual mean 25 (first trimmed right end at 25 quality), no N bases, 
 prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right 25 -rm_header -out_format 4 -out_good gard_q25 -out_bad null -graph_data gard_q25.gd
- 
 # Input and filter stats:
 # 	Input sequences: 1,297,395
 # 	Input bases: 327,560,803
@@ -36,24 +31,17 @@ prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right
 # 	Bad mean length: 253.07
 # 	Sequences filtered by specified parameters:
 # 	min_qual_mean: 15
-
 # Data report pre- & post-filter
 # ~/working/gard/16s/
 # - gard.gd.html
 # - gard_q25.gd.html
-
-################################################################################
-# LENGTH FILTERING
-# - min length 250, then trim to length 250
-
+```
+# LENGTH FILTERING & TRIMMING - min length 250, then trim to length 250
 prinseq-lite.pl -fasta gard_q25.fasta -min_len 250 -trim_to_len 250 -out_good gard_l250 -out_bad null -line_width 0
-
 # Input sequences: 1,297,380
 #	Good sequences: 1,270,992 (97.97%)
-
 #Check trim
 prinseq-lite.pl -fasta gard_l250.fasta -stats_len -out_good null -out_bad null
-
 # stats_len	max	250
 # stats_len	mean	250.00
 # stats_len	median	250
