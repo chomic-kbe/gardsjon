@@ -1,4 +1,3 @@
-```Markdown
 ##############################################################################################################################
 # SOFTWARE USED
 #	QIIME 1.9.1
@@ -35,7 +34,7 @@ prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right
 # ~/working/gard/16s/
 # - gard.gd.html
 # - gard_q25.gd.html
-```
+
 #### LENGTH FILTERING & TRIMMING - min length 250, then trim to length 250
 >prinseq-lite.pl -fasta gard_q25.fasta -min_len 250 -trim_to_len 250 -out_good gard_l250 -out_bad null -line_width 0
 # Input sequences: 1,297,380
