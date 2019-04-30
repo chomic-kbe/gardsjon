@@ -1,13 +1,17 @@
 ##############################################################################################################################
 # SOFTWARE USED
+#	QIIME 1.9.1
 # 	PRINSEQ-lite 0.20.4
 # 	sed (GNU sed) 4.2.2
 # 	GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.2-p3, GNU MP 6.0.0)
+#	cut (GNU coreutils) 8.23
+#	paste (GNU coreutils) 8.23
+#	biom, version 2.1.5
 
 ##############################################################################################################################
 # DATA PREPROCESS
 
-# Demultiplexing -(twice separately, because part of smaples in run1 and the rest in run2)
+# Demultiplexing -(twice separately, because part of samples in run1 and the rest in run2)
 
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
 
@@ -62,8 +66,7 @@ prinseq-lite.pl -fasta gard_l250.fasta -stats_len -out_good null -out_bad null
 ################################################################################
 
 # OTU CONSTRUCTION & TAXONOMY ASSIGNMENT
-# usearch needs “.” instead of “_”
-
+# usearch needs “.” instead of “_” in the sequence header
 sed 's/_/./g' gard_l250.fasta > seqs_dot.fna
 
 # dereplication
@@ -76,19 +79,45 @@ usearch81_64_new -derep_fulllength seqs_dot.fna -fastaout uniq.fna -sizeout
 usearch81_64_new -cluster_otus uniq.fna -minsize 2 -otus otus.fna -relabel OTU -otu_radius_pct 3
 #	5158 OTUs, 24103 chimeras (21.8%)
 
-# Taxonomy assignment
-usearch81_64_new -utax otus.fna -db /mnt/data/chomic/databases/utax_silva123/utax_silva123_97_16s_majority.udb -strand both -fastaout otus_tax.fna
-#	5158 seqs, 77.0% at phylum, 4.5% genus (P > 0.90)
+# Taxonomy assignment; Qiime - BLAST against SILVA v.132
+parallel_assign_taxonomy_blast.py -i otus.fna -o blast/ -t /mnt/data/chomic/databases/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt  -r /mnt/data/chomic/databases/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna -O 16
+
+
+Prepare for merging
+get rid of additional \n in otus.fna
+prinseq-lite.pl -fasta otus.fna -out_bad null -out_good otus_line -line_width 0
+
+Sort OTUs  1-max
+sed 's/OTU//1' blast/otus_tax_assignments.txt | sort -g | sed 's/^/OTU/' > blast/otus_tax_assignments_sorted.txt
+
+Add empty rows to merge with otus.fna, get rid of OTU number
+sed -e 'G' blast/otus_tax_assignments_sorted.txt | cut -f 2 > blast/blast_taxonomy.txt
+
+Reformat taxonomy for utax
+sed -e 's/;Ambiguous_taxa//g; s/D_0__/tax=d:/g; s/__/:/g; s/;/,/g; s/D_1/p/g; s/D_2/c/g; s/D_3/o/g; s/D_4/f/; s/D_5/g/g; s/D_6/s/g; s/ /_/g; s/tax=d/;tax=d/g' blast/blast_taxonomy.txt > blast/blast_taxonomy_utax.txt
+
+Merge
+paste -d "" otus_line.fasta blast_taxonomy_utax.txt > otus_tax_blast.fna
+
+
+
+
+
 
 # OTU table construction
  usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.97 -otutabout otu_table.txt
 
 #	1129175 / 1270992 mapped to OTUs (88.8%) 
 
-
 phyloseq compatible taxonomy format
 cut -f 64- otu_table.txt > tax.txt
 cut -f 1-63 otu_table.txt > abund.txt
+
+úprava formátování taxonomie, vyhození Ambiguous taxa a všech uncultured a nahrazení u_*
+sed 's/ /_/g; s/D_[0-9]__//g; s/;Ambiguous_taxa//g; s/;uncultured.*//g; s/;/,/g' tax_table_silva132_f2.txt | awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed 's/\(u_\)\1\{1,\}/u_/g; s/,/\t/g' > tax_table_silva132_f2_phyloseq.txt
+
+
+
 
 awk -F "\t" 'BEGIN {OFS = FS} {gsub(/[0-9].[0-9]/,"",$NF); gsub(/[()]/,"",$NF); print $0}' tax.txt | sed 's/_SH.07FU//g' | sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g'| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > tax_phyloseq.txt
 
@@ -183,7 +212,6 @@ AKTUALIZACE TAXONOMIE na Silva 132
 
 /mnt/data/chomic/gardsjon/16s/
 
-parallel_assign_taxonomy_blast.py -i otus.fna -o blast/ -t /mnt/data/chomic/databases/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt  -r /mnt/data/chomic/databases/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna -O 16
 
 otus_tax_assignments.txt nakopírováno do /media/hdd/data/rajec/16s/zmena_tax_table
 
@@ -191,8 +219,6 @@ cut -f 1 otus_tax_assignments.txt > tax_table_silva132_f1.txt
 cut -f 2 otus_tax_assignments.txt > tax_table_silva132_f2.txt
 
 
-úprava formátování taxonomie, vyhození Ambiguous taxa a všech uncultured a nahrazení u_*
-sed 's/ /_/g; s/D_[0-9]__//g; s/;Ambiguous_taxa//g; s/;uncultured.*//g; s/;/,/g' tax_table_silva132_f2.txt | awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | awk -F"," '{ if ($7 == "") print $1","$2","$3","$4","$5","$6",u_"$6;  else print $0}' | sed 's/\(u_\)\1\{1,\}/u_/g; s/,/\t/g' > tax_table_silva132_f2_phyloseq.txt
 
 zbytek v R
 
