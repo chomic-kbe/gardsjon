@@ -2,7 +2,8 @@ Workflow followed when processing 16S V4 region sequencing data
 - raw sequences preprocess
 - OTU construction and taxonomy assignemnt
 
-### RAW SEQUENCES PREPROCESS
+
+## RAW SEQUENCES PREPROCESS
 #### DEMULTIPLEXING 
 Done twice separately, because part of samples in run1 and the rest in run2.
 ~~~
@@ -52,52 +53,61 @@ prinseq-lite.pl -fasta gard_l250.fasta -stats_len -out_good null -out_bad null
 >- stats_len	range	1
 >- stats_len	stddev	0.00
 
-################################################################################
 
-# OTU CONSTRUCTION & TAXONOMY ASSIGNMENT
-# usearch needs “.” instead of “_” in the sequence header
+## OTU CONSTRUCTION
+USEARCH needs “.” instead of “_” in the sequence header
+~~~
 sed 's/_/./g' gard_l250.fasta > seqs_dot.fna
-
-# dereplication
+~~~
+Dereplication
+~~~
 usearch81_64_new -derep_fulllength seqs_dot.fna -fastaout uniq.fna -sizeout
-
-#	1081190 seqs, 143920 uniques, 105527 singletons (73.3%)
-#	Min size 1, median 1, max 48818, avg 7.51
+~~~
+>-	1081190 seqs, 143920 uniques, 105527 singletons (73.3%)
+>-	Min size 1, median 1, max 48818, avg 7.51
 	
-# OTU clustering (97% similarity), singletons removed
+OTU clustering (97% similarity), singletons removed
+~~~
 usearch81_64_new -cluster_otus uniq.fna -minsize 2 -otus otus.fna -relabel OTU -otu_radius_pct 3
-#	5158 OTUs, 24103 chimeras (21.8%)
+~~~
+>	5158 OTUs, 24103 chimeras (21.8%)
 
-# Taxonomy assignment; Qiime - BLAST against SILVA v.132
+##TAXONOMY ASSIGNMENT
+Taxonomy assignment; Qiime - BLAST against SILVA v.132
+~~~
 parallel_assign_taxonomy_blast.py -i otus.fna -o blast/ -t /mnt/data/chomic/databases/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt  -r /mnt/data/chomic/databases/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna -O 16
+~~~
 
-
-Prepare for merging
-get rid of additional \n in otus.fna
+Convert BLAST output to UTAX compatible
+>get rid of extra \n  within sequences in otus.fna
+~~~
 prinseq-lite.pl -fasta otus.fna -out_bad null -out_good otus_line -line_width 0
-
-Sort OTUs  1-max
+~~~
+Within BLAST output, sort OTUs ascending
+~~~
 sed 's/OTU//1' blast/otus_tax_assignments.txt | sort -g | sed 's/^/OTU/' > blast/otus_tax_assignments_sorted.txt
-
+~~~
 Add empty rows to merge with otus.fna, get rid of OTU number
+~~~
 sed -e 'G' blast/otus_tax_assignments_sorted.txt | cut -f 2 > blast/blast_taxonomy.txt
-
-Reformat taxonomy for utax
+~~~
+Reformat taxonomy syntax for utax, delete "Ambiguous taxa" field
+~~~
 sed -e 's/;Ambiguous_taxa//g; s/D_0__/tax=d:/g; s/__/:/g; s/;/,/g; s/D_1/p/g; s/D_2/c/g; s/D_3/o/g; s/D_4/f/; s/D_5/g/g; s/D_6/s/g; s/ /_/g; s/tax=d/;tax=d/g' blast/blast_taxonomy.txt > blast/blast_taxonomy_utax.txt
-
-Merge
+~~~
+Merge OTU sequences and UTAX comaptible taxonomy
+~~~
 paste -d "" otus_line.fasta blast_taxonomy_utax.txt > otus_tax_blast.fna
+~~~
+OTU table construction
+~~~
+usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.97 -otutabout otu_table.txt
+~~~
+>	1129175 / 1270992 mapped to OTUs (88.8%) 
 
 
 
-
-
-
-# OTU table construction
- usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.97 -otutabout otu_table.txt
-
-#	1129175 / 1270992 mapped to OTUs (88.8%) 
-
+~~~
 phyloseq compatible taxonomy format
 cut -f 64- otu_table.txt > tax.txt
 cut -f 1-63 otu_table.txt > abund.txt
