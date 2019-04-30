@@ -5,14 +5,13 @@ Workflow followed when processing 16S V4 region sequencing data
 
 
 ## RAW SEQUENCES PREPROCESS
+
+
+*!!! DOPLNIT PAIRED-END JOINING !!!*
+
 #### DEMULTIPLEXING 
-Done twice separately, because part of samples in run1 and the rest in run2.
 ~~~
 split_libraries_fastq.py -i out.join.fastq -o . -m map_gard2.txt -b out.barcodes.fastq --barcode_type 12 --rev_comp_mapping_barcodes --store_demultiplexed_fastq
-~~~
-Merge run1 and run2 file
-~~~
-cat run1/seqs.fastq run2/seqs.fastq > gard_argone.fastq
 ~~~
 
 #### QUALITY FILTERING
@@ -110,18 +109,18 @@ usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 
 ## BIOM table construction
 
 Convert UTAX taxonomy to phyloseq compatible
-- separate taxonomy and sequence counts
+- Separate taxonomy and sequence counts
 ~~~
 cut -f 64- otu_table.txt > tax.txt
 cut -f 1-63 otu_table.txt > abund.txt
 ~~~
 
-Delete taxonomy level letters, change field separator from "," to ";", delete fileds containing "uncultured*", fill empty fields with "u_(lowest assigned level)".
+- Delete taxonomy level letters, change field separator from "," to ";", delete fileds containing "uncultured*", fill empty fields with "u_(lowest assigned level)".
 ~~~
 sed -E 's/d://g; s/p://g; s/c://g; s/o://g; s/f://g; s/g://g; s/s://g' otu_tax.txt| awk -F"," '{ if ($2 == "") print $1",u_"$1;  else print $0}' | awk -F"," '{ if ($3 == "") print $1","$2",u_"$2;  else print $0}' | awk -F"," '{ if ($4 == "") print $1","$2","$3",u_"$3;  else print $0}' | awk -F"," '{ if ($5 == "") print $1","$2","$3","$4",u_"$4;  else print $0}' | awk -F"," '{ if ($6 == "") print $1","$2","$3","$4","$5",u_"$5;  else print $0}' | sed -E '1s/^.*$/taxonomy/; s/,/;/g' | sed 's/\(u_\)\1\{1,\}/u_/g' > otu_tax_phyloseq.txt
 ~~~
 
-Merge OTU sequences and phyloseq comaptible taxonomy
+- Merge sequence counts and phyloseq comaptible taxonomy
 ~~~
 paste abund.txt tax_phyloseq.txt > otu_table_phyloseq.txt
 ~~~
