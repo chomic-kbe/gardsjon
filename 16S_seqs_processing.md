@@ -23,37 +23,39 @@ min. qual mean 25 (first trimmed right end at 25 quality), no N bases
 ~~~
 prinseq-lite.pl -fastq gard.fastq -min_qual_mean 25 -ns_max_n 0 -trim_qual_right 25 -rm_header -out_format 4 -out_good gard_q25 -out_bad null -graph_data gard_q25.gd
 ~~~
-# Input and filter stats:
-# 	Input sequences: 1,297,395
-# 	Input bases: 327,560,803
-# 	Input mean length: 252.48
-# 	Good sequences: 1,297,380 (100.00%)
-# 	Good bases: 327,466,677
-# 	Good mean length: 252.41
-# 	Bad sequences: 15 (0.00%)
-# 	Bad bases: 3,796
-# 	Bad mean length: 253.07
-# 	Sequences filtered by specified parameters:
-# 	min_qual_mean: 15
-# Data report pre- & post-filter
-# ~/working/gard/16s/
-# - gard.gd.html
-# - gard_q25.gd.html
+> Input and filter stats:
+> 	Input sequences: 1,297,395
+> 	Input bases: 327,560,803
+> 	Input mean length: 252.48
+> 	Good sequences: 1,297,380 (100.00%)
+> 	Good bases: 327,466,677
+>	Good mean length: 252.41
+> 	Bad sequences: 15 (0.00%)
+> 	Bad bases: 3,796
+> 	Bad mean length: 253.07
+> 	Sequences filtered by specified parameters:
+> 	min_qual_mean: 15
 
-#### LENGTH FILTERING & TRIMMING - min length 250, then trim to length 250
->prinseq-lite.pl -fasta gard_q25.fasta -min_len 250 -trim_to_len 250 -out_good gard_l250 -out_bad null -line_width 0
-# Input sequences: 1,297,380
-#	Good sequences: 1,270,992 (97.97%)
-#Check trim
+#### LENGTH FILTERING & TRIMMING
+min length 250, then trim to length 250
+~~~
+prinseq-lite.pl -fasta gard_q25.fasta -min_len 250 -trim_to_len 250 -out_good gard_l250 -out_bad null -line_width 0
+~~~
+> Input sequences: 1,297,380
+>	Good sequences: 1,270,992 (97.97%)
+
+Check trim
+~~~
 prinseq-lite.pl -fasta gard_l250.fasta -stats_len -out_good null -out_bad null
-# stats_len	max	250
-# stats_len	mean	250.00
-# stats_len	median	250
-# stats_len	min	250
-# stats_len	mode	250
-# stats_len	modeval	1270992
-# stats_len	range	1
-# stats_len	stddev	0.00
+~~~
+> stats_len	max	250
+> stats_len	mean	250.00
+> stats_len	median	250
+> stats_len	min	250
+> stats_len	mode	250
+> stats_len	modeval	1270992
+> stats_len	range	1
+> stats_len	stddev	0.00
 
 ################################################################################
 
