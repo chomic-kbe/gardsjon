@@ -143,7 +143,7 @@ Num observations: 5158
 Total count: 1129175
 Table density (fraction of non-zero values): 0.208
 
->Counts/sample summary:
+> Counts/sample summary:
  Min: 26.0
  Max: 25698.0
  Median: 18263.500
@@ -152,7 +152,7 @@ Table density (fraction of non-zero values): 0.208
  Sample Metadata Categories: None provided
  Observation Metadata Categories: taxonomy
 
-Counts/sample detail:
+> Counts/sample detail:
 575: 26.0
 576: 11319.0
 579: 11504.0
@@ -215,31 +215,6 @@ Counts/sample detail:
 557: 24839.0
 558: 25527.0
 526: 25698.0
-
-
-AKTUALIZACE TAXONOMIE na Silva 132
-- blastování původních /mnt/data/chomic/gardsjon/16s/otus.fna proti Silva 132
-
-/mnt/data/chomic/gardsjon/16s/
-
-
-otus_tax_assignments.txt nakopírováno do /media/hdd/data/rajec/16s/zmena_tax_table
-
-cut -f 1 otus_tax_assignments.txt > tax_table_silva132_f1.txt
-cut -f 2 otus_tax_assignments.txt > tax_table_silva132_f2.txt
-
-
-
-zbytek v R
-
-
-
-
-
-
-python2.7 collapse_table.py -i ../../gardsjon/16s/otu_table_phyloseq.txt -o ../../gardsjon/16s/faprotax/out.txt -r ../../gardsjon/16s/faprotax/log.txt -g FAPROTAX.txt -d taxonomy --force --group_leftovers_as not_assigned
-
-
 
 
 ### SOFTWARE USED
