@@ -6,8 +6,10 @@ Workflow followed when processing 16S V4 region sequencing data
 
 ## RAW SEQUENCES PREPROCESS
 
-
-*!!! DOPLNIT PAIRED-END JOINING !!!*
+#### PAIRED-END JOINING
+~~~
+join_paired_ends.py -f forward_reads.fastq -r reverse_reads.fastq -o joined.fastq
+~~~
 
 #### DEMULTIPLEXING 
 ~~~
