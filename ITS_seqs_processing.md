@@ -86,9 +86,9 @@ Add empty rows to merge with otus.fna, get rid of OTU number
 ~~~
 sed -e 'G' blast/otus_tax_assignments_sorted.txt | cut -f 2 > blast/blast_taxonomy.txt
 ~~~
-Reformat taxonomy syntax for utax; delete "Ambigous_taxa" fields
+Reformat taxonomy syntax for utax; delete "No blast hit" fields
 ~~~
-sed -e 's/;Ambiguous_taxa//g; s/D_0__/tax=d:/g; s/__/:/g; s/;/,/g; s/D_1/p/g; s/D_2/c/g; s/D_3/o/g; s/D_4/f/; s/D_5/g/g; s/D_6/s/g; s/ /_/g; s/tax=d/;tax=d/g' blast/blast_taxonomy.txt > blast/blast_taxonomy_utax.txt
+sed -e 's/unidentified//g; s/k__/tax=d:/g; s/__/:/g; s/;/,/g; s/,p:,c:,o:,f:,g:,s://g; s/,c:,o:,f:,g:,s://g; s/,o:,f:,g:,s://g; s/,f:,g:,s://g; s/,g:,s://g; s/,s:$//g; s/tax=d/;tax=d/g; s/No blast hit/;No blast hit/g' blast_taxonomy.txt > blast_taxonomy_utax.txt
 
 ~~~
 Merge OTU sequences and UTAX comaptible taxonomy
