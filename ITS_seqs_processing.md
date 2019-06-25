@@ -37,7 +37,7 @@ prinseq-lite.pl -fasta itsx/gard.ITS1.fasta -out_good gard_l150 - out_bad null -
 
 Check filtering success
 ~~~
-prinseq-lite.pl -fasta rum.ITS1_l150.fasta -stats_len -out_good null -out_bad null
+prinseq-lite.pl -fasta gard_l150.fasta -stats_len -out_good null -out_bad null
 ~~~
 >- stats_len       max     221
 >-  stats_len       mean    174.64
