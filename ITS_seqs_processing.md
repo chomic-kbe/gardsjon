@@ -97,7 +97,7 @@ paste -d "" otus_line.fasta blast_taxonomy_utax.txt > otus_tax_blast.fna
 ~~~
 OTU table construction
 ~~~
-usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax.fna -strand plus -id 0.985 -otutabout otu_table.txt
+usearch81_64_new -usearch_global seqs_dot.fna -db otus_tax_blast.fna -strand plus -id 0.985 -otutabout otu_table.txt
 ~~~
 >	868329 / 933570 mapped to OTUs (93.0%) 
 
